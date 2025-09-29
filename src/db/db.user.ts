@@ -4,16 +4,19 @@ import { Workflow } from './db.workflow';
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
-  id: number;
-
-  @Column()
-  name: string;
+  id: string;
 
   @Column({ nullable: false, unique: true })
   email: string;
 
-  @Column({ nullable: false, select: false })
+  @Column({ nullable: true, select: false })
   password: string;
+
+  @Column()
+  provider: string; // e.g. "local", "google", "github"
+
+  @Column({ nullable: true })
+  providerId: string; // ID from the OAuth provider
 
   @Column({ default: true })
   isActive: boolean;
