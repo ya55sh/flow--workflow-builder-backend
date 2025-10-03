@@ -4,6 +4,7 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   OneToMany,
+  OneToOne,
 } from 'typeorm';
 import { User } from './db.user';
 import { Trigger } from './db.trigger';
@@ -20,9 +21,6 @@ export class Workflow {
   @Column({ type: 'text', nullable: true })
   description: string;
 
-  @Column({ type: 'json' })
-  data: any;
-
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
@@ -36,9 +34,9 @@ export class Workflow {
   @ManyToOne(() => User, (user) => user.workflows, { onDelete: 'CASCADE' })
   user: User;
 
-  @OneToMany(() => Trigger, (trigger) => trigger.workflow)
-  triggers: Trigger[];
-
   @OneToMany(() => Action, (action) => action.workflow)
   actions: Action[];
+
+  @OneToOne(() => Trigger, (trigger) => trigger.workflow)
+  trigger: Trigger;
 }

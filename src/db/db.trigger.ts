@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToOne,
+  JoinColumn,
+} from 'typeorm';
 import { Workflow } from './db.workflow';
 
 @Entity()
@@ -12,8 +18,9 @@ export class Trigger {
   @Column({ type: 'json' })
   config: any; // trigger-specific settings
 
-  @ManyToOne(() => Workflow, (workflow) => workflow.triggers, {
+  @OneToOne(() => Workflow, (workflow) => workflow.trigger, {
     onDelete: 'CASCADE',
   })
+  @JoinColumn()
   workflow: Workflow;
 }

@@ -1,10 +1,11 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
 import { Workflow } from './db.workflow';
+import { UserApp } from './db.user_app';
 
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
-  id: string;
+  id: number;
 
   @Column({ nullable: false, unique: true })
   email: string;
@@ -33,4 +34,7 @@ export class User {
 
   @OneToMany(() => Workflow, (workflow) => workflow.user)
   workflows: Workflow[];
+
+  @OneToMany(() => UserApp, (userApp) => userApp.user)
+  apps: UserApp[];
 }

@@ -4,13 +4,17 @@ import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
+import { WorkflowsModule } from './workflows/workflows.module';
+import { OauthModule } from './oauth/oauth.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './db/db.user';
 import { Workflow } from './db/db.workflow';
 import { Action } from './db/db.action';
 import { Trigger } from './db/db.trigger';
 import { WorkflowRun } from './db/db.workflow_run';
+import { UserApp } from './db/db.user_app';
 import { ActionRun } from './db/db.action-run';
+
 import { Log } from './db/db.log';
 
 @Module({
@@ -25,11 +29,22 @@ import { Log } from './db/db.log';
       username: 'postgres',
       password: 'root',
       database: 'flow_db',
-      entities: [User, Workflow, Action, Trigger, WorkflowRun, ActionRun, Log],
+      entities: [
+        User,
+        Workflow,
+        Action,
+        Trigger,
+        WorkflowRun,
+        ActionRun,
+        Log,
+        UserApp,
+      ],
       synchronize: true,
     }),
     AuthModule,
     UsersModule,
+    WorkflowsModule,
+    OauthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

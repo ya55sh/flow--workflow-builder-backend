@@ -35,12 +35,13 @@ export class UsersService {
     return this.findByEmail(email);
   }
 
-  async findById(id: string): Promise<User | null> {
+  async findById(id: number): Promise<User | null> {
     return this.usersRepo.findOne({ where: { id } });
   }
 
   async create(params: AuthPayload): Promise<User> {
     if (params.type === 'google') {
+      console.log('here here');
       const { email, type, sub } = params;
       const user = this.usersRepo.create({
         email,
