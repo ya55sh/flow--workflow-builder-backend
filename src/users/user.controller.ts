@@ -42,17 +42,22 @@ export class UserController {
   ) {}
 
   @Post()
-  async getUser(@Body() payload: { id: string }): Promise<any> {
+  async getUser(
+    @Body() payload: { id: string },
+    @Res() res: Response,
+  ): Promise<any> {
     try {
-      const user = await this.usersService.findOne(payload.id);
+      console.log('Get user payload:', payload);
+      const user = await this.usersService.findById(Number(payload.id));
+      console.log('Fetched user:', user);
       if (user) {
-        return user;
+        return res.status(200).json(user);
       } else {
-        return { message: 'User not found' };
+        return res.status(404).json({ message: 'User not found' });
       }
     } catch (error) {
       console.log('Error fetching user', error);
-      return { error: 'Failed to fetch user' };
+      return res.status(500).json({ error: 'Failed to fetch user' });
     }
   }
 

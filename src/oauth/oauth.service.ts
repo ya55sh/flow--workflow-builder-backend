@@ -114,4 +114,24 @@ export class OauthService {
 
     return this.userAppsRepo.save(userApp);
   }
+
+  async checkUserAppStatus(user: User, appName: string) {
+    const existing = await this.userAppsRepo.findOne({
+      where: { user: { id: user.id }, appName },
+    });
+
+    if (!existing) {
+      return { connected: false };
+    }
+
+    const isExpired =
+      existing.expiresAt && new Date(existing.expiresAt) < new Date();
+
+    return {
+      connected: true,
+      appName: existing.appName,
+      expiresAt: existing.expiresAt,
+      expired: !!isExpired,
+    };
+  }
 }

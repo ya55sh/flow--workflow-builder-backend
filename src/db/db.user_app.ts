@@ -10,7 +10,7 @@ export class UserApp {
   user: User;
 
   @Column()
-  appName: string; // e.g., "slack", "google"
+  appName: string; // e.g., "slack", "gmail"
 
   @Column()
   accessToken: string;

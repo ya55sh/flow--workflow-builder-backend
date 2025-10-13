@@ -15,7 +15,7 @@ import { AuthGuard } from 'src/auth/auth.guard';
 
 // Apply AuthGuard to all routes in this controller
 
-@Controller('oauth')
+@Controller('oauth/app')
 @UseGuards(AuthGuard)
 export class OauthController {
   constructor(private readonly oauthService: OauthService) {}
@@ -23,7 +23,9 @@ export class OauthController {
   // Step 1: redirect user to app's OAuth page
   @Get(':app')
   redirectToApp(@Param('app') app: SupportedApp, @Res() res: Response) {
+    console.log('Redirecting to app:', app);
     const appConfig = AppsCatalog[app];
+    console.log('App config:', appConfig);
     if (!appConfig) throw new Error('Unsupported app');
 
     const clientId = process.env[`${app.toUpperCase()}_CLIENT_ID`];
@@ -51,5 +53,24 @@ export class OauthController {
     await this.oauthService.saveUserApp(req.user, app, tokens);
 
     return res.json({ message: `${app} connected`, tokens });
+  }
+
+  @Get('status/:appName')
+  async getAppStatus(
+    @Req() req: Request,
+    @Param('appName') appName: string,
+    @Res() res: Response,
+  ) {
+    const status = await this.oauthService.checkUserAppStatus(
+      req.user,
+      appName,
+    );
+    if (status) {
+      return res.status(200).json({ status });
+    } else {
+      return res
+        .status(404)
+        .json({ connected: false, message: 'App not connected' });
+    }
   }
 }

@@ -1,10 +1,14 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { join } from 'path';
+import * as express from 'express';
 import { config } from 'dotenv';
 
 async function bootstrap() {
   config();
+
   const app = await NestFactory.create(AppModule);
+  app.use('/logos', express.static(join(__dirname, '..', 'logos')));
 
   app.enableCors({
     origin: '*',
