@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../db/db.user';
+import { UserApp } from 'src/db/db.user_app';
 import * as bcrypt from 'bcrypt';
 
 type NormalAuthPayload = {
@@ -24,18 +25,24 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private usersRepo: Repository<User>,
+    @InjectRepository(UserApp)
+    private userAppsRepo: Repository<UserApp>,
   ) {}
 
-  async findByEmail(email: string): Promise<User | null> {
+  async findUserByEmail(email: string): Promise<User | null> {
     return this.usersRepo.findOne({ where: { email } });
+  }
+
+  async findUserApps(userId: number): Promise<UserApp[]> {
+    return this.userAppsRepo.find({ where: { user: { id: userId } } });
   }
 
   // Add findOne method for AuthService compatibility
   async findOne(email: string): Promise<User | null> {
-    return this.findByEmail(email);
+    return this.findUserByEmail(email);
   }
 
-  async findById(id: number): Promise<User | null> {
+  async findUserById(id: number): Promise<User | null> {
     return this.usersRepo.findOne({ where: { id } });
   }
 

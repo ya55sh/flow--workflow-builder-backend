@@ -3,6 +3,8 @@ import { AppModule } from './app.module';
 import { join } from 'path';
 import * as express from 'express';
 import { config } from 'dotenv';
+// const localtunnel = require("localtunnel");
+import localtunnel from 'localtunnel';
 
 async function bootstrap() {
   config();
@@ -21,5 +23,12 @@ async function bootstrap() {
       `Server is running on http://localhost:${process.env.PORT ?? 3000}`,
     );
   });
+
+  const tunnel = await localtunnel({
+    port: 2000,
+    subdomain: 'flow',
+  });
+
+  console.log('Tunnel URL:', tunnel?.url);
 }
 bootstrap();

@@ -4,13 +4,21 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserApp } from '../db/db.user_app';
 import { User } from '../db/db.user';
-import { SupportedApp, AppsCatalog } from './apps.config';
+import { SupportedApp } from './apps.config';
 
 interface OAuthTokenResponse {
   access_token: string;
   refresh_token?: string;
   expires_in?: number;
   [key: string]: any;
+}
+
+interface TokenResponse {
+  access_token: string;
+  expires_in?: number;
+  scope?: string;
+  token_type?: string;
+  refresh_token?: string;
 }
 
 export interface ExchangeCodeForTokensResult {
@@ -31,10 +39,10 @@ export class OauthService {
     app: SupportedApp,
     code: string,
   ): Promise<ExchangeCodeForTokensResult> {
-    const appConfig = AppsCatalog[app];
     const clientId = process.env[`${app.toUpperCase()}_CLIENT_ID`];
     const clientSecret = process.env[`${app.toUpperCase()}_CLIENT_SECRET`];
     const redirectUri = process.env[`${app.toUpperCase()}_REDIRECT_URI`];
+    const tokenUrl = process.env[`${app.toUpperCase()}_TOKEN_URI`];
 
     let payload: Record<string, string> = {};
     const headers: Record<string, string> = {};
@@ -68,7 +76,7 @@ export class OauthService {
     }
 
     const res = await axios.post<OAuthTokenResponse>(
-      appConfig.tokenUrl,
+      tokenUrl!,
       new URLSearchParams(payload),
       { headers },
     );
@@ -84,16 +92,20 @@ export class OauthService {
   }
 
   async saveUserApp(
-    user: User,
+    state: string,
     app: SupportedApp,
     tokens: ExchangeCodeForTokensResult,
   ) {
     const expiresAt = tokens.expiresIn
-      ? new Date(Date.now() + tokens.expiresIn * 1000)
+      ? new Date(tokens.expiresIn).getTime()
       : null;
 
+    const user = await this.userAppsRepo.manager.findOne(User, {
+      where: { id: Number(state) },
+    });
+
     let userApp = await this.userAppsRepo.findOne({
-      where: { user: { id: user.id }, appName: app },
+      where: { user: { id: Number(state) }, appName: app },
     });
 
     if (!userApp) {
@@ -133,5 +145,64 @@ export class OauthService {
       expiresAt: existing.expiresAt,
       expired: !!isExpired,
     };
+  }
+
+  async generateAccessToken(user: User, appName: string): Promise<string> {
+    const userApp = await this.userAppsRepo.findOne({
+      where: {
+        user: { id: user.id },
+        appName: appName,
+      },
+    });
+
+    if (!userApp) {
+      throw new Error(`No app found for user ${user.id} with name ${appName}`);
+    }
+
+    console.log('userapp, ', userApp);
+
+    const clientId = process.env?.[`${appName.toUpperCase()}_CLIENT_ID`];
+    const redirectUri = process.env?.[`${appName.toUpperCase()}_REDIRECT_URI`];
+    const clientSecret =
+      process.env?.[`${appName.toUpperCase()}_CLIENT_SECRET`];
+    const refreshToken = userApp.metadata.refresh_token;
+    const tokenUrl = process.env?.[`${appName.toUpperCase()}_TOKEN_URI`];
+
+    if (!clientId || !clientSecret || !tokenUrl) {
+      throw new Error('Missing OAuth credentials in environment variables');
+    }
+
+    const params = new URLSearchParams();
+    params.append('client_id', clientId);
+    params.append('client_secret', clientSecret);
+    params.append('refresh_token', refreshToken);
+    params.append('grant_type', 'refresh_token');
+    if (redirectUri) params.append('redirect_uri', redirectUri);
+
+    try {
+      const response = await axios.post<TokenResponse>(
+        tokenUrl,
+        params.toString(),
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        },
+      );
+      console.log('token ', response);
+
+      userApp.accessToken = response.data.access_token;
+      userApp.expiresAt = response.data.expires_in!;
+
+      this.userAppsRepo.save(userApp);
+
+      return 'success';
+    } catch (err: any) {
+      console.error(
+        'Error refreshing access token:',
+        err.response?.data || err.message,
+      );
+      throw err;
+    }
   }
 }

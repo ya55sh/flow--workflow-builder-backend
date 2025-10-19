@@ -1,8 +1,9 @@
-import { Controller, Body, Post, Res } from '@nestjs/common';
+import { Controller, Body, Post, Res, Req, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { AuthService } from 'src/auth/auth.service';
+import { AuthGuard } from '../auth/auth.guard';
 import { JwtAuthService } from 'src/auth/jwt.service';
-import type { Response } from 'express';
+import type { Response, Request } from 'express';
 
 type NormalAuthPayload = {
   type: 'normal';
@@ -42,16 +43,19 @@ export class UserController {
   ) {}
 
   @Post()
+  @UseGuards(AuthGuard)
   async getUser(
     @Body() payload: { id: string },
+    @Req() req: Request,
     @Res() res: Response,
   ): Promise<any> {
     try {
-      console.log('Get user payload:', payload);
-      const user = await this.usersService.findById(Number(payload.id));
-      console.log('Fetched user:', user);
+      console.log('Get user payload:', req['user']);
+      const user = await this.usersService.findUserById(Number(req.user.id));
+      const userApp = await this.usersService.findUserApps(Number(req.user.id));
+
       if (user) {
-        return res.status(200).json(user);
+        return res.status(200).json({ user, userApp });
       } else {
         return res.status(404).json({ message: 'User not found' });
       }
@@ -69,7 +73,7 @@ export class UserController {
     try {
       if (payload.type === 'google') {
         // Handle Google OAuth signup/login
-        let user = await this.usersService.findByEmail(payload.email);
+        let user = await this.usersService.findUserByEmail(payload.email);
         if (!user) {
           user = await this.usersService.create(payload);
 
@@ -87,7 +91,9 @@ export class UserController {
             .json({ message: 'User already exists', userId: user.id });
         }
       } else if (payload.type === 'normal') {
-        const existingUser = await this.usersService.findByEmail(payload.email);
+        const existingUser = await this.usersService.findUserByEmail(
+          payload.email,
+        );
         if (!existingUser) {
           if (payload.password !== payload.confirmPassword) {
             return res.status(401).json({ error: 'Passwords do not match' });
@@ -118,7 +124,7 @@ export class UserController {
 
       if (payload.type === 'google') {
         // Handle Google OAuth login
-        let user = await this.usersService.findByEmail(payload.email);
+        let user = await this.usersService.findUserByEmail(payload.email);
         if (!user) {
           // User doesn't exist, create them
           user = await this.usersService.create(payload);
@@ -142,7 +148,7 @@ export class UserController {
         }
       } else if (payload.type === 'normal') {
         // Handle normal email/password login
-        const user = await this.usersService.findByEmail(payload.email);
+        const user = await this.usersService.findUserByEmail(payload.email);
         if (!user) {
           return res.status(404).json({ error: 'User not found' });
         }
@@ -178,5 +184,10 @@ export class UserController {
       console.log('Error login failed', error);
       return res.status(500).json({ error: 'Login failed' });
     }
+  }
+
+  @Post('/createUserApp')
+  async createUserApp() {
+    // To be implemented
   }
 }

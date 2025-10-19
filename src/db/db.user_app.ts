@@ -12,14 +12,14 @@ export class UserApp {
   @Column()
   appName: string; // e.g., "slack", "gmail"
 
-  @Column()
+  @Column({ select: false })
   accessToken: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, select: false })
   refreshToken: string;
 
-  @Column({ type: 'timestamp', nullable: true })
-  expiresAt: Date; // access token expiry
+  @Column({ nullable: true })
+  expiresAt: number; // access token expiry
 
   @Column({ type: 'json', nullable: true })
   metadata: any; // store extra info like Slack userId, workspace info, etc.

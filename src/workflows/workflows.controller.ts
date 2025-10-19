@@ -29,12 +29,6 @@ export class WorkflowsController {
     return this.workflowsService.findAll(req.user);
   }
 
-  // @Get('apps')
-  // getApps() {
-  //   console.log('going in plain get by id');
-  //   return AppsCatalog;
-  // }
-
   @Get('apps')
   getApps() {
     return Object.entries(AppsCatalog).map(([appName, config]) => ({
@@ -42,13 +36,11 @@ export class WorkflowsController {
       appName,
       displayName: config.displayName,
       logo: config.logo,
-      authType: config.authType,
-      authUrl: config.authUrl,
-      tokenUrl: config.tokenUrl,
       scopes: config.scopes,
-      neutralScopes: config.neutralScopes,
       triggerScopes: config.triggerScopes,
       actionScopes: config.actionScopes,
+      triggers: config.triggers,
+      actions: config.actions,
     }));
   }
 
