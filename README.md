@@ -178,14 +178,6 @@ npm run build
 npm run start:prod
 ```
 
-### Debug Mode
-
-```bash
-npm run start:debug
-```
-
----
-
 ## API Documentation
 
 ### Interactive Swagger UI
@@ -277,35 +269,6 @@ GET /api/logs/workflow/:workflowId
 Headers: {"Authorization": "Bearer <token>"}
 ```
 
----
-
-## Development Commands
-
-### Testing
-
-```bash
-npm run test              # Unit tests
-npm run test:e2e          # E2E tests
-npm run test:cov          # Test coverage
-```
-
-### Code Quality
-
-```bash
-npm run lint              # Run ESLint
-npm run format            # Format with Prettier
-```
-
-### Database Migrations
-
-```bash
-npm run migration:generate -- -n MigrationName
-npm run migration:run
-npm run migration:revert
-```
-
----
-
 ## How It Works
 
 1. **Background Scheduler**: Polls active workflows every 30 seconds
@@ -339,16 +302,12 @@ npm run migration:revert
 
 ---
 
-## License
-
-[Specify your license]
-
 ## Support
 
 For issues or questions, refer to:
 
 - Swagger API docs: `http://localhost:2000/api/docs`
-- Technical report: `WORKFLOW_EXECUTION_FLOW_REPORT.md`
+- Process diagram: `WORKFLOW_EXECUTION_FLOW_REPORT.md`
 
 ---
 
