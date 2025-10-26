@@ -41,9 +41,7 @@ services:
 
   # NestJS Application
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ya55sh/flow-backend:latest
     container_name: flow-backend
     restart: unless-stopped
     ports:
