@@ -214,11 +214,9 @@ export class OauthService {
 
       return { message: 'success', expiresAt: newExpiry };
     } catch (err: any) {
-      console.error(
-        'Error refreshing access token:',
-        err.response?.data || err.message,
-      );
-      throw err;
+      const errorMsg = err.response?.data?.error_description || err.message;
+      console.error(`Token refresh failed for ${appName}: ${errorMsg}`);
+      throw new Error(`Token expired. Please reconnect ${appName}.`);
     }
   }
 }

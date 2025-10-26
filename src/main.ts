@@ -73,11 +73,20 @@ async function bootstrap() {
   // Create a public tunnel for webhook testing (allows external services to call our webhooks)
   // Note: Localtunnel may not work properly in Docker containers
   if (process.env.ENABLE_TUNNEL === 'true') {
-    const tunnel = await localtunnel({
-      port: port,
-      subdomain: 'flow',
-    });
-    console.log('Tunnel URL:', tunnel?.url);
+    try {
+      console.log('Starting localtunnel...');
+      const tunnel = await localtunnel({
+        port: port,
+        subdomain: 'flow',
+      });
+      console.log('Tunnel URL:', tunnel?.url);
+
+      tunnel.on('close', () => {
+        console.log('Tunnel closed');
+      });
+    } catch (error) {
+      console.error('Failed to start localtunnel:', error.message);
+    }
   } else {
     console.log('Tunnel disabled. Set ENABLE_TUNNEL=true to enable.');
   }
