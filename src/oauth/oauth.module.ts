@@ -10,5 +10,6 @@ import { OauthController } from './oauth.controller';
   imports: [TypeOrmModule.forFeature([User, UserApp]), AuthModule],
   controllers: [OauthController],
   providers: [OauthService],
+  exports: [OauthService],
 })
 export class OauthModule {}

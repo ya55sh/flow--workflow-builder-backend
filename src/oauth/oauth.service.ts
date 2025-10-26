@@ -4,7 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserApp } from '../db/db.user_app';
 import { User } from '../db/db.user';
-import { SupportedApp } from './apps.config';
+import { SupportedApp, AppsCatalog, getOAuthProvider } from './apps.config';
 
 interface OAuthTokenResponse {
   access_token: string;
@@ -39,16 +39,20 @@ export class OauthService {
     app: SupportedApp,
     code: string,
   ): Promise<ExchangeCodeForTokensResult> {
-    const clientId = process.env[`${app.toUpperCase()}_CLIENT_ID`];
-    const clientSecret = process.env[`${app.toUpperCase()}_CLIENT_SECRET`];
-    const redirectUri = process.env[`${app.toUpperCase()}_REDIRECT_URI`];
-    const tokenUrl = process.env[`${app.toUpperCase()}_TOKEN_URI`];
+    const oauthProvider = getOAuthProvider(app);
+
+    const clientId = process.env[`${oauthProvider.toUpperCase()}_CLIENT_ID`];
+    const clientSecret =
+      process.env[`${oauthProvider.toUpperCase()}_CLIENT_SECRET`];
+    const redirectUri =
+      process.env[`${oauthProvider.toUpperCase()}_REDIRECT_URI`];
+    const tokenUrl = process.env[`${oauthProvider.toUpperCase()}_TOKEN_URI`];
 
     let payload: Record<string, string> = {};
     const headers: Record<string, string> = {};
 
     // Different providers expect different formats:
-    if (app === 'slack') {
+    if (oauthProvider === 'slack') {
       payload = {
         client_id: clientId!,
         client_secret: clientSecret!,
@@ -56,7 +60,7 @@ export class OauthService {
         redirect_uri: redirectUri!,
       };
       headers['Content-Type'] = 'application/x-www-form-urlencoded';
-    } else if (app === 'google') {
+    } else if (oauthProvider === 'google') {
       payload = {
         client_id: clientId!,
         client_secret: clientSecret!,
@@ -65,7 +69,7 @@ export class OauthService {
         grant_type: 'authorization_code',
       };
       headers['Content-Type'] = 'application/x-www-form-urlencoded';
-    } else if (app === 'github') {
+    } else if (oauthProvider === 'github') {
       payload = {
         client_id: clientId!,
         client_secret: clientSecret!,
@@ -97,7 +101,7 @@ export class OauthService {
     tokens: ExchangeCodeForTokensResult,
   ) {
     const expiresAt = tokens.expiresIn
-      ? new Date(tokens.expiresIn).getTime()
+      ? new Date(Date.now() + tokens.expiresIn * 1000)
       : null;
 
     const user = await this.userAppsRepo.manager.findOne(User, {
@@ -147,7 +151,10 @@ export class OauthService {
     };
   }
 
-  async generateAccessToken(user: User, appName: string): Promise<string> {
+  async generateAccessToken(
+    user: User,
+    appName: string,
+  ): Promise<{ message: string; expiresAt: Date }> {
     const userApp = await this.userAppsRepo.findOne({
       where: {
         user: { id: user.id },
@@ -161,12 +168,18 @@ export class OauthService {
 
     console.log('userapp, ', userApp);
 
-    const clientId = process.env?.[`${appName.toUpperCase()}_CLIENT_ID`];
-    const redirectUri = process.env?.[`${appName.toUpperCase()}_REDIRECT_URI`];
+    // Get OAuth provider from AppsCatalog
+    const oauthProvider = AppsCatalog[appName as SupportedApp]
+      ? getOAuthProvider(appName as SupportedApp)
+      : appName;
+
+    const clientId = process.env?.[`${oauthProvider.toUpperCase()}_CLIENT_ID`];
+    const redirectUri =
+      process.env?.[`${oauthProvider.toUpperCase()}_REDIRECT_URI`];
     const clientSecret =
-      process.env?.[`${appName.toUpperCase()}_CLIENT_SECRET`];
+      process.env?.[`${oauthProvider.toUpperCase()}_CLIENT_SECRET`];
     const refreshToken = userApp.metadata.refresh_token;
-    const tokenUrl = process.env?.[`${appName.toUpperCase()}_TOKEN_URI`];
+    const tokenUrl = process.env?.[`${oauthProvider.toUpperCase()}_TOKEN_URI`];
 
     if (!clientId || !clientSecret || !tokenUrl) {
       throw new Error('Missing OAuth credentials in environment variables');
@@ -189,14 +202,17 @@ export class OauthService {
           },
         },
       );
-      console.log('token ', response);
+      console.log('from generate access token ', response.data);
+
+      const newExpiry = new Date(Date.now() + response.data.expires_in! * 1000); //convert token time to ms and add it to current time and convert it to iso date
 
       userApp.accessToken = response.data.access_token;
-      userApp.expiresAt = response.data.expires_in!;
+      userApp.expiresAt = newExpiry;
+      await this.userAppsRepo.save(userApp).catch((err) => {
+        console.log(err.message);
+      });
 
-      this.userAppsRepo.save(userApp);
-
-      return 'success';
+      return { message: 'success', expiresAt: newExpiry };
     } catch (err: any) {
       console.error(
         'Error refreshing access token:',

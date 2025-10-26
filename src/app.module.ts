@@ -1,21 +1,19 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { WorkflowsModule } from './workflows/workflows.module';
 import { OauthModule } from './oauth/oauth.module';
+import { IntegrationsModule } from './integrations/integrations.module';
+import { QueueModule } from './queue/queue.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './db/db.user';
 import { Workflow } from './db/db.workflow';
-import { Action } from './db/db.action';
-import { Trigger } from './db/db.trigger';
 import { WorkflowRun } from './db/db.workflow_run';
 import { UserApp } from './db/db.user_app';
-import { ActionRun } from './db/db.action-run';
-
 import { Log } from './db/db.log';
+import { ProcessedTrigger } from './db/db.processed_trigger';
 
 @Module({
   imports: [
@@ -29,24 +27,17 @@ import { Log } from './db/db.log';
       username: 'postgres',
       password: 'root',
       database: 'flow_db',
-      entities: [
-        User,
-        Workflow,
-        Action,
-        Trigger,
-        WorkflowRun,
-        ActionRun,
-        Log,
-        UserApp,
-      ],
+      entities: [User, Workflow, WorkflowRun, Log, UserApp, ProcessedTrigger],
       synchronize: true,
     }),
     AuthModule,
     UsersModule,
     WorkflowsModule,
     OauthModule,
+    IntegrationsModule,
+    QueueModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [],
+  providers: [],
 })
 export class AppModule {}

@@ -1,14 +1,5 @@
-import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
-  ManyToOne,
-  OneToMany,
-  OneToOne,
-} from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
 import { User } from './db.user';
-import { Trigger } from './db.trigger';
-import { Action } from './db.action';
 
 @Entity()
 export class Workflow {
@@ -20,6 +11,18 @@ export class Workflow {
 
   @Column({ type: 'text', nullable: true })
   description: string;
+
+  @Column({ type: 'json', nullable: true })
+  steps: any; // Store the entire workflow steps array from FE
+
+  @Column({ default: false })
+  isActive: boolean;
+
+  @Column({ type: 'timestamp', nullable: true })
+  lastRunAt: Date;
+
+  @Column({ nullable: true })
+  pollingInterval: number; // seconds, derived from trigger type
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
@@ -33,10 +36,4 @@ export class Workflow {
 
   @ManyToOne(() => User, (user) => user.workflows, { onDelete: 'CASCADE' })
   user: User;
-
-  @OneToMany(() => Action, (action) => action.workflow)
-  actions: Action[];
-
-  @OneToOne(() => Trigger, (trigger) => trigger.workflow)
-  trigger: Trigger;
 }

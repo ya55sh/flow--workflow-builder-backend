@@ -1,4 +1,12 @@
-import { Controller, Body, Post, Res, Req, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Body,
+  Post,
+  Get,
+  Res,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { AuthService } from 'src/auth/auth.service';
 import { AuthGuard } from '../auth/auth.guard';
@@ -42,13 +50,9 @@ export class UserController {
     private readonly jwtAuthService: JwtAuthService,
   ) {}
 
-  @Post()
+  @Get()
   @UseGuards(AuthGuard)
-  async getUser(
-    @Body() payload: { id: string },
-    @Req() req: Request,
-    @Res() res: Response,
-  ): Promise<any> {
+  async getUser(@Req() req: Request, @Res() res: Response): Promise<any> {
     try {
       console.log('Get user payload:', req['user']);
       const user = await this.usersService.findUserById(Number(req.user.id));
@@ -65,7 +69,7 @@ export class UserController {
     }
   }
 
-  @Post('/signup')
+  @Post('signup')
   async createUser(
     @Body() payload: AuthPayload,
     @Res() res: Response,
@@ -114,7 +118,7 @@ export class UserController {
     }
   }
 
-  @Post('/login')
+  @Post('login')
   async login(
     @Body() payload: LoginPayload,
     @Res() res: Response,
@@ -186,7 +190,7 @@ export class UserController {
     }
   }
 
-  @Post('/createUserApp')
+  @Post('createUserApp')
   async createUserApp() {
     // To be implemented
   }
