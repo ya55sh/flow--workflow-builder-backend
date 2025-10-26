@@ -1,0 +1,52 @@
+# Dependencies
+node_modules
+npm-debug.log
+pnpm-debug.log
+yarn-error.log
+
+# Build output
+dist
+build
+*.log
+
+# Tests and coverage
+coverage
+*.test.ts
+*.spec.ts
+test
+
+# Development files
+.git
+.gitignore
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Documentation
+README.md
+*.md
+!DOCKER.md
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# TypeScript
+*.tsbuildinfo
+
+# ESLint
+.eslintcache
+eslint.config.mjs
+
+# Docker files themselves
+Dockerfile
+.dockerignore
+docker-compose*.yml
+docker-scripts.*

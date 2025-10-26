@@ -63,6 +63,14 @@ A scalable workflow automation system built with NestJS that connects Gmail, Sla
 
 Before starting, ensure you have:
 
+### Option 1: Docker (Recommended)
+
+- Docker v20.10 or higher
+- Docker Compose v2.0 or higher
+- OAuth credentials (see OAuth Setup section)
+
+### Option 2: Local Development
+
 - Node.js v18.0.0 or higher
 - PostgreSQL v14.0 or higher
 - Redis v6.0 or higher
@@ -73,7 +81,84 @@ Before starting, ensure you have:
 
 ---
 
-## Installation
+## 🐳 Docker Installation (Recommended)
+
+The easiest way to get started is using Docker. This automatically sets up PostgreSQL, Redis, and the application.
+
+### Quick Start with Docker
+
+```bash
+# 1. Clone the repository
+git clone <repository-url>
+cd flow--workflow-builder-backend
+
+# 2. Start all services (Linux/Mac)
+./docker-scripts.sh start-all
+
+# Or on Windows
+docker-scripts.bat start-all
+
+# 3. Access the application
+# API: http://localhost:2000/api
+# Swagger: http://localhost:2000/api/docs
+```
+
+The script will automatically create a `.env` file with default values. Update the OAuth credentials in `.env` before connecting apps.
+
+### Docker Commands
+
+```bash
+# Start all services (PostgreSQL, Redis, App)
+./docker-scripts.sh start-all
+
+# Start only database services for local development
+./docker-scripts.sh start-dev
+
+# Stop all services
+./docker-scripts.sh stop
+
+# View logs
+./docker-scripts.sh logs
+
+# Run migrations
+./docker-scripts.sh migrate
+
+# Rebuild after code changes
+./docker-scripts.sh rebuild
+
+# Clean everything (removes all data)
+./docker-scripts.sh clean
+
+# Show all available commands
+./docker-scripts.sh help
+```
+
+### Manual Docker Commands
+
+```bash
+# Build and start all services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Run migrations
+docker-compose exec app npm run migration:run
+
+# Stop all services
+docker-compose down
+
+# Remove all data
+docker-compose down -v
+```
+
+For detailed Docker documentation, see [DOCKER.md](DOCKER.md).
+
+---
+
+## Local Installation (Without Docker)
+
+If you prefer to run the application directly on your machine:
 
 ### 1. Clone and Install
 
@@ -88,7 +173,7 @@ npm install
 ```bash
 # Create database
 psql -U postgres
-CREATE DATABASE workflow_builder;
+CREATE DATABASE flow_db;
 \q
 
 # Run migrations
@@ -109,49 +194,49 @@ docker run -d -p 6379:6379 redis:latest
 
 ## Configuration
 
-Create a `.env` file in the root directory:
+Create a `.env` file in the root directory (automatically created by `docker-scripts.sh` or create manually):
 
 ```env
-# Server
+# Application
 PORT=2000
 NODE_ENV=development
 
 # Database
 DB_HOST=localhost
 DB_PORT=5432
-DB_USERNAME=postgres
-DB_PASSWORD=your_password
-DB_DATABASE=workflow_builder
+DB_USER=postgres
+DB_PASSWORD=root
+DB_NAME=flow_db
 
 # Redis
 REDIS_HOST=localhost
 REDIS_PORT=6379
 
 # JWT
-JWT_SECRET=your_super_secret_jwt_key_here
-JWT_EXPIRATION=24h
+JWT_SECRET=change-this-secret-in-production
+JWT_EXPIRES_IN=7d
 
-# Google OAuth (Gmail)
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-GOOGLE_REDIRECT_URI=http://localhost:2000/api/oauth/callback/gmail
-GOOGLE_AUTH_URI=https://accounts.google.com/o/oauth2/v2/auth
-GOOGLE_TOKEN_URI=https://oauth2.googleapis.com/token
-
-# Slack OAuth
-SLACK_CLIENT_ID=your_slack_client_id
-SLACK_CLIENT_SECRET=your_slack_client_secret
-SLACK_REDIRECT_URI=http://localhost:2000/api/oauth/callback/slack
-SLACK_AUTH_URI=https://slack.com/oauth/v2/authorize
-SLACK_TOKEN_URI=https://slack.com/api/oauth.v2.access
+# Tunnel (optional - for webhook testing)
+ENABLE_TUNNEL=false
 
 # GitHub OAuth
-GITHUB_CLIENT_ID=your_github_client_id
-GITHUB_CLIENT_SECRET=your_github_client_secret
-GITHUB_REDIRECT_URI=http://localhost:2000/api/oauth/callback/github
-GITHUB_AUTH_URI=https://github.com/login/oauth/authorize
-GITHUB_TOKEN_URI=https://github.com/login/oauth/access_token
+GITHUB_CLIENT_ID=your-github-client-id
+GITHUB_CLIENT_SECRET=your-github-client-secret
+GITHUB_REDIRECT_URI=http://localhost:2000/api/oauth/github/callback
+
+# Slack OAuth
+SLACK_CLIENT_ID=your-slack-client-id
+SLACK_CLIENT_SECRET=your-slack-client-secret
+SLACK_REDIRECT_URI=http://localhost:2000/api/oauth/slack/callback
+
+# Google OAuth (for Gmail)
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_REDIRECT_URI=http://localhost:2000/api/oauth/app/gmail/callback
+GOOGLE_TOKEN_URI=https://oauth2.googleapis.com/token
 ```
+
+**Note**: When using Docker, set `DB_HOST=postgres` and `REDIS_HOST=redis` (already configured in docker-compose.yml)
 
 ### OAuth Setup
 
@@ -282,6 +367,7 @@ Headers: {"Authorization": "Bearer <token>"}
 
 ## Additional Documentation
 
+- **Docker Setup Guide**: See `DOCKER.md` for complete Docker documentation
 - **Detailed Technical Report**: See `WORKFLOW_EXECUTION_FLOW_REPORT.md` for complete end-to-end flow
 - **API Reference**: Visit `http://localhost:2000/api/docs` after starting the server
 - **Code Documentation**: Comprehensive inline comments throughout the codebase

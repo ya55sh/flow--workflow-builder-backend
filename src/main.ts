@@ -56,14 +56,12 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('api/docs', app, document);
 
-  console.log(
-    'Swagger documentation available at: http://localhost:2000/api/docs',
-  );
-
   // Start the HTTP server
-  await app.listen(process.env.PORT!, () => {
+  const port = parseInt(process.env.PORT || '2000');
+  await app.listen(port, () => {
+    console.log(`Server is running on http://localhost:${port}`);
     console.log(
-      `Server is running on http://localhost:${process.env.PORT ?? 3000}`,
+      `Swagger documentation available at: http://localhost:${port}/api/docs`,
     );
   });
 
@@ -73,12 +71,16 @@ async function bootstrap() {
   console.log('Workflow scheduler started');
 
   // Create a public tunnel for webhook testing (allows external services to call our webhooks)
-  const tunnel = await localtunnel({
-    port: 2000,
-    subdomain: 'flow',
-  });
-
-  console.log('Tunnel URL:', tunnel?.url);
+  // Note: Localtunnel may not work properly in Docker containers
+  if (process.env.ENABLE_TUNNEL === 'true') {
+    const tunnel = await localtunnel({
+      port: port,
+      subdomain: 'flow',
+    });
+    console.log('Tunnel URL:', tunnel?.url);
+  } else {
+    console.log('Tunnel disabled. Set ENABLE_TUNNEL=true to enable.');
+  }
 }
 
 // Start the application
