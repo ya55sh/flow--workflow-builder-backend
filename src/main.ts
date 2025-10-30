@@ -52,9 +52,16 @@ async function bootstrap() {
       'JWT-auth', // Reference name for protected endpoints
     )
     .build();
-
-  const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('api/docs', app, document);
+  // Only generate Swagger documentation in development mode
+  if (process.env.NODE_ENV !== 'production') {
+    try {
+      const document = SwaggerModule.createDocument(app, swaggerConfig);
+      SwaggerModule.setup('api/docs', app, document);
+      console.log('Swagger documentation generated');
+    } catch (error) {
+      console.error('Failed to generate Swagger documentation:', error);
+    }
+  }
 
   // Start the HTTP server
   const port = parseInt(process.env.PORT || '2000');
