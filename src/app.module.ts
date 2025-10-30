@@ -22,13 +22,18 @@ import { ProcessedTrigger } from './db/db.processed_trigger';
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT || '5432'),
-      username: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD || 'root',
-      database: process.env.DB_NAME || 'flow_db',
+      url:
+        process.env.DATABASE_URL ||
+        'postgres://postgres:root@localhost:5432/flow_db',
       entities: [User, Workflow, WorkflowRun, Log, UserApp, ProcessedTrigger],
       synchronize: process.env.NODE_ENV !== 'production',
+      ssl:
+        process.env.NODE_ENV === 'production'
+          ? { rejectUnauthorized: false }
+          : false,
+      extra: {
+        max: 5, // Connection pool size
+      },
     }),
     AuthModule,
     UsersModule,
