@@ -14,9 +14,7 @@ export class QueueService {
       username: process.env.REDIS_USERNAME || 'default',
       password: process.env.REDIS_PASSWORD || '',
       maxRetriesPerRequest: null,
-      ...(process.env.NODE_ENV === 'production'
-        ? { tls: { rejectUnauthorized: false } }
-        : {}),
+      tls: {},
     });
 
     this.workflowQueue = new Queue('workflow-execution', {
