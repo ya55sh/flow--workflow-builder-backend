@@ -24,8 +24,10 @@ import { HealthController } from './health.controller';
     TypeOrmModule.forRoot({
       type: 'postgres',
       url:
-        process.env.DATABASE_URL ||
-        'postgres://postgres:root@localhost:5432/flow_db',
+        process.env.NODE_ENV === 'production'
+          ? process.env.DATABASE_URL
+          : process.env.DATABASE_URL_LOCAL ||
+            'postgres://postgres:root@localhost:5432/flow_db',
       entities: [User, Workflow, WorkflowRun, Log, UserApp, ProcessedTrigger],
       synchronize: process.env.NODE_ENV !== 'production',
       ssl:

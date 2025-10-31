@@ -21,6 +21,6 @@ export class UserApp {
   @Column({ type: 'timestamp', nullable: true })
   expiresAt?: Date; // access token expiry
 
-  @Column({ type: 'json', nullable: true })
+  @Column({ type: 'json', nullable: true, select: false })
   metadata: any; // store extra info like Slack userId, workspace info, etc.
 }

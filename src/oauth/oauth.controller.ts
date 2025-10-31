@@ -171,7 +171,19 @@ export class OauthController {
       await this.oauthService.saveUserApp(state, app, tokens);
       console.log('Saved user app successfully');
 
-      return res.json({ message: `${app} connected`, tokens });
+      return res.send(`
+        <html>
+          <body>
+            <script>
+              window.opener.postMessage(
+                { success: true, message: "${app} connected successfully" },
+                "*"
+              );
+              window.close();
+            </script>
+          </body>
+        </html>
+      `);
     } catch (error: any) {
       console.error('Error in callback:', error.message);
       console.error('Full error:', error);
