@@ -14,6 +14,7 @@ import { WorkflowRun } from './db/db.workflow_run';
 import { UserApp } from './db/db.user_app';
 import { Log } from './db/db.log';
 import { ProcessedTrigger } from './db/db.processed_trigger';
+import { HealthController } from './health.controller';
 
 @Module({
   imports: [
@@ -42,7 +43,7 @@ import { ProcessedTrigger } from './db/db.processed_trigger';
     IntegrationsModule,
     QueueModule,
   ],
-  controllers: [],
+  controllers: [HealthController],
   providers: [],
 })
 export class AppModule {}
