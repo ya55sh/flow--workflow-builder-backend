@@ -34,9 +34,7 @@ export class WorkflowProcessor {
       username: process.env.REDIS_USERNAME || 'default',
       password: process.env.REDIS_PASSWORD || '',
       maxRetriesPerRequest: null,
-      ...(process.env.NODE_ENV === 'production'
-        ? { tls: { rejectUnauthorized: false } }
-        : {}),
+      tls: {},
     });
 
     this.worker = new Worker(
