@@ -32,6 +32,10 @@ export class IntegrationsService {
       select: ['id', 'accessToken', 'refreshToken', 'expiresAt'],
     });
 
+    console.log(
+      `GETTING USER APP FOR ${appName} with userid ${user.id} ${userApp}`,
+    );
+
     if (!userApp) {
       throw new UnauthorizedException(
         `Please connect your ${appName} account before using this workflow`,
@@ -112,6 +116,7 @@ export class IntegrationsService {
       | 'listLabels'
       | 'getProfile',
     data?: any,
+    retryOn401: boolean = true,
   ): Promise<any> {
     const accessToken = await this.getValidToken(user, 'gmail');
 
@@ -131,70 +136,122 @@ export class IntegrationsService {
       }
     }
 
-    let result: any;
-    switch (method) {
-      case 'fetchEmails':
-        result = await this.gmailIntegration.fetchRecentEmails(
-          accessToken,
-          data?.query,
-          data?.maxResults,
-        );
-        break;
-      case 'sendEmail':
-        result = await this.gmailIntegration.sendEmail(
-          accessToken,
-          data.to,
-          data.subject,
-          data.body,
-          data.from,
-        );
-        break;
-      case 'replyToEmail':
-        result = await this.gmailIntegration.replyToEmail(
-          accessToken,
-          data.messageId,
-          data.threadId,
-          data.body,
-          data.subject,
-        );
-        break;
-      case 'addLabelToEmail':
-        result = await this.gmailIntegration.addLabelToEmail(
-          accessToken,
-          data.messageId,
-          data.labelIds,
-        );
-        break;
-      case 'starEmail':
-        result = await this.gmailIntegration.starEmail(
-          accessToken,
-          data.messageId,
-        );
-        break;
-      case 'markAsRead':
-        result = await this.gmailIntegration.markAsRead(
-          accessToken,
-          data.messageId,
-        );
-        break;
-      case 'listLabels':
-        result = await this.gmailIntegration.listLabels(accessToken);
-        break;
-      case 'getProfile':
-        result = await this.gmailIntegration.getProfile(accessToken);
-        break;
-      default:
-        throw new Error(`Unknown Gmail API method: ${method}`);
-    }
+    try {
+      let result: any;
+      switch (method) {
+        case 'fetchEmails':
+          result = await this.gmailIntegration.fetchRecentEmails(
+            accessToken,
+            data?.query,
+            data?.maxResults,
+          );
+          break;
+        case 'sendEmail':
+          result = await this.gmailIntegration.sendEmail(
+            accessToken,
+            data.to,
+            data.subject,
+            data.body,
+            data.from,
+          );
+          break;
+        case 'replyToEmail':
+          result = await this.gmailIntegration.replyToEmail(
+            accessToken,
+            data.messageId,
+            data.threadId,
+            data.body,
+            data.subject,
+          );
+          break;
+        case 'addLabelToEmail':
+          result = await this.gmailIntegration.addLabelToEmail(
+            accessToken,
+            data.messageId,
+            data.labelIds,
+          );
+          break;
+        case 'starEmail':
+          result = await this.gmailIntegration.starEmail(
+            accessToken,
+            data.messageId,
+          );
+          break;
+        case 'markAsRead':
+          result = await this.gmailIntegration.markAsRead(
+            accessToken,
+            data.messageId,
+          );
+          break;
+        case 'listLabels':
+          result = await this.gmailIntegration.listLabels(accessToken);
+          break;
+        case 'getProfile':
+          result = await this.gmailIntegration.getProfile(accessToken);
+          break;
+        default:
+          throw new Error(`Unknown Gmail API method: ${method}`);
+      }
 
-    // Cache the result for cacheable methods
-    if (method in cacheableMetadata) {
-      const cacheKey = `gmail:${user.id}:${method}`;
-      this.cacheService.set(cacheKey, result, cacheableMetadata[method]);
-      console.log(`Cached ${cacheKey} for ${cacheableMetadata[method]}ms`);
-    }
+      // Cache the result for cacheable methods
+      if (method in cacheableMetadata) {
+        const cacheKey = `gmail:${user.id}:${method}`;
+        this.cacheService.set(cacheKey, result, cacheableMetadata[method]);
+        console.log(`Cached ${cacheKey} for ${cacheableMetadata[method]}ms`);
+      }
 
-    return result;
+      return result;
+    } catch (error: any) {
+      // Check if it's a 401 Unauthorized error (invalid/expired token)
+      const is401Error =
+        error.response?.status === 401 ||
+        error.response?.data?.error?.code === 401 ||
+        error.message?.includes('401') ||
+        error.message?.toLowerCase().includes('unauthorized');
+
+      if (is401Error && retryOn401) {
+        console.log('Gmail API returned 401, refreshing token and retrying...');
+        try {
+          // Force refresh the token (bypass expiresAt check)
+          await this.oauthService.generateAccessToken(user, 'gmail');
+
+          // Clear cache for this user/method since token changed
+          if (method in cacheableMetadata) {
+            const cacheKey = `gmail:${user.id}:${method}`;
+            this.cacheService.delete(cacheKey);
+          }
+
+          // Log token refresh
+          await this.loggingService.createLog(
+            LogEventType.TOKEN_REFRESHED,
+            {
+              appName: 'gmail',
+              reason: '401_error_retry',
+            },
+            user,
+          );
+
+          // Retry the API call once with the new token (prevent infinite loop)
+          return await this.callGmailAPI(user, method, data, false);
+        } catch (refreshError: any) {
+          console.error(
+            'Failed to refresh Gmail token after 401 error:',
+            refreshError?.message,
+          );
+          this.mailService.sendEmail(
+            user.email,
+            `Failed to refresh Gmail token`,
+            `Gmail API returned 401 error and token refresh failed. Please reconnect your Gmail account in Flow.`,
+          );
+          throw new UnauthorizedException(
+            'Gmail token invalid. Please reconnect your Gmail account.',
+          );
+        }
+      }
+
+      // Re-throw if not a 401, or if retry already attempted
+      throw error;
+    }
   }
 
   async callSlackAPI(
