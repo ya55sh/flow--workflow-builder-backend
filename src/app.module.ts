@@ -29,7 +29,7 @@ import { HealthController } from './health.controller';
           : process.env.DATABASE_URL_LOCAL ||
             'postgres://postgres:root@localhost:5432/flow_db',
       entities: [User, Workflow, WorkflowRun, Log, UserApp, ProcessedTrigger],
-      synchronize: process.env.NODE_ENV !== 'production',
+      synchronize: true,
       ssl:
         process.env.NODE_ENV === 'production'
           ? { rejectUnauthorized: false }
