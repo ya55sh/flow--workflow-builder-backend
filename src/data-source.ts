@@ -18,6 +18,6 @@ export const AppDataSource = new DataSource({
   database: process.env.DB_NAME || 'flow_db',
   entities: [User, Workflow, WorkflowRun, Log, UserApp],
   migrations: ['src/migrations/*.ts'],
-  synchronize: false, // Disable in production, use migrations instead
+  synchronize: true, // Disable in production, use migrations instead
   logging: process.env.NODE_ENV !== 'production',
 });
