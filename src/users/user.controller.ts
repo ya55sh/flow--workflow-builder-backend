@@ -6,6 +6,7 @@ import {
   Res,
   Req,
   UseGuards,
+  Param,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { AuthService } from 'src/auth/auth.service';
@@ -190,8 +191,27 @@ export class UserController {
     }
   }
 
-  @Post('createUserApp')
-  async createUserApp() {
-    // To be implemented
+  @Post('app/:appName/delete')
+  @UseGuards(AuthGuard)
+  async deleteUserApp(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Param('appName') appName: string,
+  ): Promise<any> {
+    try {
+      const userApps = await this.usersService.findUserApps(
+        Number(req.user.id),
+      );
+      const userApp = userApps.find((userApp) => userApp.appName === appName);
+
+      if (!userApp) {
+        return res.status(404).json({ error: 'User app not found' });
+      }
+      await this.usersService.deleteUserApp(userApp.id, appName, req.user.id);
+      return res.status(200).json({ message: 'User app deleted successfully' });
+    } catch (error) {
+      console.log('Error deleting user app', error);
+      return res.status(500).json({ error: 'Failed to delete user app' });
+    }
   }
 }

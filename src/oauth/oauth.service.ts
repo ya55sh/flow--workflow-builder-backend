@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { UserApp } from '../db/db.user_app';
 import { User } from '../db/db.user';
 import { SupportedApp, AppsCatalog, getOAuthProvider } from './apps.config';
+import { MailService } from '../mailService/mail.service';
 
 interface OAuthTokenResponse {
   access_token: string;
@@ -33,6 +34,7 @@ export class OauthService {
   constructor(
     @InjectRepository(UserApp)
     private readonly userAppsRepo: Repository<UserApp>,
+    private readonly mailSerivce: MailService,
   ) {}
 
   async exchangeCodeForTokens(
@@ -178,7 +180,7 @@ export class OauthService {
       process.env?.[`${oauthProvider.toUpperCase()}_REDIRECT_URI`];
     const clientSecret =
       process.env?.[`${oauthProvider.toUpperCase()}_CLIENT_SECRET`];
-    const refreshToken = userApp.metadata.refresh_token;
+    const refreshToken = userApp?.refreshToken;
     const tokenUrl = process.env?.[`${oauthProvider.toUpperCase()}_TOKEN_URI`];
 
     if (!clientId || !clientSecret || !tokenUrl) {
@@ -216,6 +218,11 @@ export class OauthService {
     } catch (err: any) {
       const errorMsg = err.response?.data?.error_description || err.message;
       console.error(`Token refresh failed for ${appName}: ${errorMsg}`);
+      await this.mailSerivce.sendEmail(
+        user.email,
+        `Token expired for ${appName}`,
+        `Token expired for ${appName}. Please reconnect ${appName}.`,
+      );
       throw new Error(`Token expired. Please reconnect ${appName}.`);
     }
   }

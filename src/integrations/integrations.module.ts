@@ -10,6 +10,7 @@ import { CacheService } from './cache.service';
 import { OauthModule } from '../oauth/oauth.module';
 import { AuthModule } from '../auth/auth.module';
 import { DbModule } from '../db/db.module';
+import { MailModule } from '../mailService/mail.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { DbModule } from '../db/db.module';
     OauthModule,
     AuthModule,
     DbModule,
+    MailModule,
   ],
   controllers: [IntegrationsController],
   providers: [

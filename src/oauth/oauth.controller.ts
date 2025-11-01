@@ -271,7 +271,7 @@ export class OauthController {
   })
   @ApiParam({
     name: 'appName',
-    description: 'Name of the app to refresh token for',
+    description: 'Name of the app to refresh access token for',
     enum: ['gmail', 'slack', 'github'],
     example: 'gmail',
   })

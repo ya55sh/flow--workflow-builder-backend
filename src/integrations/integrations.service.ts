@@ -9,6 +9,7 @@ import { SlackIntegration } from './slack.integration';
 import { GitHubIntegration } from './github.integration';
 import { CacheService } from './cache.service';
 import { LoggingService, LogEventType } from '../db/logging.service';
+import { MailService } from '../mailService/mail.service';
 
 @Injectable()
 export class IntegrationsService {
@@ -21,6 +22,7 @@ export class IntegrationsService {
     private readonly githubIntegration: GitHubIntegration,
     private readonly cacheService: CacheService,
     private readonly loggingService: LoggingService,
+    private readonly mailService: MailService,
   ) {}
 
   async getValidToken(user: User, appName: string): Promise<string> {
@@ -64,7 +66,12 @@ export class IntegrationsService {
           select: ['accessToken'],
         }))!.accessToken;
       } catch (error: any) {
-        console.error('Failed to refresh token:', error.message);
+        console.error('Failed to refresh access token:', error?.message);
+        this.mailService.sendEmail(
+          user.email,
+          `Failed to refresh ${appName} token`,
+          `Failed to refresh ${appName} token. Please reconnect your account in Flow.`,
+        );
         throw new UnauthorizedException(
           `Failed to refresh ${appName} token. Please reconnect your account`,
         );
@@ -80,6 +87,11 @@ export class IntegrationsService {
     });
 
     if (!userApp) {
+      this.mailService.sendEmail(
+        user.email,
+        `Please connect your ${appName} account before using this workflow`,
+        `Please connect your ${appName} account before using this workflow.`,
+      );
       throw new UnauthorizedException(
         `Please connect your ${appName} account before using this workflow`,
       );

@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../db/db.user';
 import { UserApp } from 'src/db/db.user_app';
+import { Workflow } from 'src/db/db.workflow';
 import * as bcrypt from 'bcrypt';
 
 type NormalAuthPayload = {
@@ -27,6 +28,8 @@ export class UsersService {
     private usersRepo: Repository<User>,
     @InjectRepository(UserApp)
     private userAppsRepo: Repository<UserApp>,
+    @InjectRepository(Workflow)
+    private workflowsRepo: Repository<Workflow>,
   ) {}
 
   async findUserByEmail(email: string): Promise<User | null> {
@@ -68,5 +71,10 @@ export class UsersService {
     }
   }
 
-  // Add password comparison method
+  // Delete user app
+  async deleteUserApp(userAppId: number, appName: string, userId: number) {
+    await this.userAppsRepo.delete({ id: userAppId, appName });
+    await this.workflowsRepo.delete({ user: { id: userId } });
+    return { message: 'User app deleted successfully' };
+  }
 }
