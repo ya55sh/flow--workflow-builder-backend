@@ -177,7 +177,7 @@ export class OauthController {
             <script>
               window.opener.postMessage(
                 { success: true, message: "${app} connected successfully" },
-                "*"
+                "https://snare.co.in"
               );
               window.close();
             </script>
