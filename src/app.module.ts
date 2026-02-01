@@ -23,17 +23,14 @@ import { HealthController } from './health.controller';
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',
-      url:
-        process.env.NODE_ENV === 'production'
-          ? process.env.DATABASE_URL
-          : process.env.DATABASE_URL_LOCAL ||
-            'postgres://postgres:root@localhost:5432/flow_db',
+      host: process.env.DB_HOST,
+      port: Number(process.env.DB_PORT),
+      username: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
       entities: [User, Workflow, WorkflowRun, Log, UserApp, ProcessedTrigger],
       synchronize: true,
-      ssl:
-        process.env.NODE_ENV === 'production'
-          ? { rejectUnauthorized: false }
-          : false,
+      ssl: process.env.DB_SSL === 'true',
       extra: {
         max: 5, // Connection pool size
       },
